@@ -1,6 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Zap, X, Upload, FileText, ChevronDown, ChevronUp, Maximize2, Minimize2, Loader2, Mic, MicOff, RotateCcw, Minus } from 'lucide-react';
+import { Droplets, X, Upload, FileText, ChevronDown, ChevronUp, Maximize2, Minimize2, Loader2, Mic, MicOff, RotateCcw, Minus, Zap } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+
+// DigitalOcean-inspired Sammy the Shark logo
+const SammyLogo = () => (
+  <svg viewBox="0 0 32 32" className="w-5 h-5" fill="currentColor">
+    <path d="M16 4C9.373 4 4 9.373 4 16s5.373 12 12 12c1.326 0 2.604-.218 3.8-.62v-3.96c0-.56-.453-1.02-1.013-1.02h-2.774c-.56 0-1.013.46-1.013 1.02v2.2a8.88 8.88 0 01-2.2-.6v-1.6c0-.56-.453-1.02-1.013-1.02H9.013C8.453 22.4 8 22.86 8 23.42v.86a8.96 8.96 0 01-1.6-2.08h.587c.56 0 1.013-.46 1.013-1.02v-2.36c0-.56-.453-1.02-1.013-1.02H5.4a9.04 9.04 0 010-3.6h1.587c.56 0 1.013-.46 1.013-1.02v-2.36c0-.56-.453-1.02-1.013-1.02H6.4a8.96 8.96 0 011.6-2.08v.86c0 .56.453 1.02 1.013 1.02h2.774c.56 0 1.013-.46 1.013-1.02v-1.6a8.88 8.88 0 012.2-.6v2.2c0 .56.453 1.02 1.013 1.02h2.774c.56 0 1.013-.46 1.013-1.02v-3.96A11.92 11.92 0 0116 4zm4.8 12.8h-3.2v3.2h3.2v-3.2z"/>
+  </svg>
+);
 
 export interface TaskType {
   id: 'summarize' | 'research' | 'solve' | 'code' | 'rewrite';
@@ -36,15 +45,43 @@ const TASK_TYPES: TaskType[] = [
   { id: 'rewrite', name: 'Rewrite' },
 ];
 
-// Simple markdown renderer
+// Render LaTeX math with KaTeX
+function renderMath(latex: string, displayMode: boolean = false): string {
+  try {
+    return katex.renderToString(latex, {
+      displayMode,
+      throwOnError: false,
+      trust: true,
+    });
+  } catch (e) {
+    console.warn('KaTeX error:', e);
+    return `<code class="text-red-400">${latex}</code>`;
+  }
+}
+
+// Markdown + LaTeX renderer
 function renderMarkdown(text: string) {
-  const lines = text.split('\n');
   const elements: JSX.Element[] = [];
   let listItems: string[] = [];
+  let inCodeBlock = false;
+  let codeBlockContent: string[] = [];
+  let codeBlockLang = '';
 
-  const processInline = (line: string) => {
-    let processed = line.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
-    processed = processed.replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 bg-slate-700 rounded text-blue-300 text-xs">$1</code>');
+  // Process inline formatting including LaTeX
+  const processInline = (line: string): string => {
+    let processed = line;
+    
+    // Inline math: $...$
+    processed = processed.replace(/\$([^$]+)\$/g, (_, math) => {
+      return renderMath(math.trim(), false);
+    });
+    
+    // Bold: **text**
+    processed = processed.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
+    
+    // Inline code: `code`
+    processed = processed.replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 bg-slate-700 rounded text-blue-300 text-xs font-mono">$1</code>');
+    
     return processed;
   };
 
@@ -61,25 +98,91 @@ function renderMarkdown(text: string) {
     }
   };
 
+  // Pre-process: Handle block math \[ ... \] 
+  let processedText = text;
+  
+  // Replace \[ ... \] with display math
+  processedText = processedText.replace(/\\\[([\s\S]*?)\\\]/g, (_, math) => {
+    const rendered = renderMath(math.trim(), true);
+    return `<div class="my-3 overflow-x-auto">${rendered}</div>`;
+  });
+  
+  // Replace $$ ... $$ with display math  
+  processedText = processedText.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
+    const rendered = renderMath(math.trim(), true);
+    return `<div class="my-3 overflow-x-auto">${rendered}</div>`;
+  });
+
+  const lines = processedText.split('\n');
+
   lines.forEach((line, i) => {
-    if (line.startsWith('### ')) {
+    // Code block handling
+    if (line.startsWith('```')) {
+      if (inCodeBlock) {
+        // End code block
+        elements.push(
+          <pre key={i} className="bg-slate-800 rounded-lg p-3 my-2 overflow-x-auto">
+            <code className="text-sm text-slate-200 font-mono">{codeBlockContent.join('\n')}</code>
+          </pre>
+        );
+        codeBlockContent = [];
+        inCodeBlock = false;
+      } else {
+        // Start code block
+        flushList();
+        inCodeBlock = true;
+        codeBlockLang = line.slice(3).trim();
+      }
+      return;
+    }
+
+    if (inCodeBlock) {
+      codeBlockContent.push(line);
+      return;
+    }
+
+    // Check if line contains rendered math (from block processing)
+    if (line.includes('<div class="my-3 overflow-x-auto">')) {
+      flushList();
+      elements.push(
+        <div key={i} dangerouslySetInnerHTML={{ __html: line }} />
+      );
+      return;
+    }
+
+    // Headers
+    if (line.startsWith('#### ')) {
+      flushList();
+      elements.push(<h4 key={i} className="text-sm font-bold text-white mt-3 mb-1">{line.slice(5)}</h4>);
+    } else if (line.startsWith('### ')) {
       flushList();
       elements.push(<h3 key={i} className="text-base font-bold text-white mt-3 mb-1">{line.slice(4)}</h3>);
     } else if (line.startsWith('## ')) {
       flushList();
       elements.push(<h2 key={i} className="text-lg font-bold text-white mt-3 mb-1">{line.slice(3)}</h2>);
-    } else if (/^\d+\.\s/.test(line) || line.startsWith('- ') || line.startsWith('* ')) {
+    } else if (line.startsWith('# ')) {
+      flushList();
+      elements.push(<h1 key={i} className="text-xl font-bold text-white mt-3 mb-2">{line.slice(2)}</h1>);
+    }
+    // Lists
+    else if (/^\d+\.\s/.test(line) || line.startsWith('- ') || line.startsWith('* ')) {
       const content = line.replace(/^(\d+\.\s|-\s|\*\s)/, '');
       listItems.push(content);
-    } else if (line === '---') {
+    }
+    // Horizontal rule
+    else if (line === '---' || line === '***') {
       flushList();
       elements.push(<hr key={i} className="border-slate-700 my-3" />);
-    } else if (line.trim() === '') {
+    }
+    // Empty line
+    else if (line.trim() === '') {
       flushList();
-    } else {
+    }
+    // Regular paragraph
+    else {
       flushList();
       elements.push(
-        <p key={i} className="text-slate-200 text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: processInline(line) }} />
+        <p key={i} className="text-slate-200 text-sm leading-relaxed my-1" dangerouslySetInnerHTML={{ __html: processInline(line) }} />
       );
     }
   });
@@ -495,14 +598,14 @@ function App() {
   }, [isOverlayMode, resizeWindow]);
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden rounded-xl relative">
-      {/* Global Drop Overlay - Shows when dragging files anywhere */}
+    <div className="h-screen flex flex-col bg-gradient-to-br from-[#0a1628] via-[#0d1f3c] to-[#0a1628] text-white overflow-hidden rounded-xl relative">
+      {/* Global Drop Overlay - Ocean themed */}
       {isDragging && (
-        <div className="absolute inset-0 z-50 bg-slate-900/95 flex items-center justify-center pointer-events-none">
-          <div className="text-center p-8 border-2 border-dashed border-blue-500 rounded-2xl bg-blue-900/20">
-            <Upload className="w-12 h-12 text-blue-400 mx-auto mb-3" />
-            <p className="text-blue-400 text-lg font-medium">Drop your file here</p>
-            <p className="text-blue-400/60 text-sm mt-2">PDF, DOCX, TXT, MD, JSON, CSV</p>
+        <div className="absolute inset-0 z-50 bg-[#0a1628]/95 flex items-center justify-center pointer-events-none">
+          <div className="text-center p-8 border-2 border-dashed border-[#0080FF] rounded-2xl bg-[#0080FF]/10">
+            <Droplets className="w-12 h-12 text-[#0080FF] mx-auto mb-3" />
+            <p className="text-[#0080FF] text-lg font-medium">Drop your file here</p>
+            <p className="text-[#0080FF]/60 text-sm mt-2">PDF, DOCX, TXT, MD, JSON, CSV</p>
           </div>
         </div>
       )}
@@ -513,10 +616,10 @@ function App() {
         className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/80 cursor-grab active:cursor-grabbing select-none"
       >
         <div className="flex items-center gap-2 pointer-events-none">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-            <Zap className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 bg-gradient-to-br from-[#0080FF] to-[#0069D9] rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <Droplets className="w-4 h-4 text-white" />
           </div>
-          <span className="font-semibold text-sm">Pentamind</span>
+          <span className="font-semibold text-sm bg-gradient-to-r from-[#0080FF] to-cyan-400 bg-clip-text text-transparent">Pentamind</span>
         </div>
         
         <div className="flex items-center gap-1">
@@ -698,7 +801,7 @@ function App() {
               {/* Task Buttons & Execute - Only when NOT showing response */}
               {!showingResponse && (
                 <>
-                  {/* Task Buttons */}
+                  {/* Task Buttons - DigitalOcean styled */}
                   <div className="flex gap-1.5 flex-wrap mb-3">
                     {TASK_TYPES.map((task) => (
                       <button
@@ -706,8 +809,8 @@ function App() {
                         onClick={() => setSelectedTask(task.id)}
                         className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
                           selectedTask === task.id
-                            ? 'bg-slate-700 text-white'
-                            : 'bg-slate-800/50 text-slate-400 hover:text-white'
+                            ? 'bg-[#0080FF]/20 text-[#0080FF] border border-[#0080FF]/50'
+                            : 'bg-slate-800/50 text-slate-400 hover:text-white border border-transparent'
                         }`}
                       >
                         {task.name}
@@ -715,14 +818,14 @@ function App() {
                     ))}
                   </div>
 
-                  {/* Execute Button */}
+                  {/* Execute Button - DigitalOcean Blue */}
                   <button
                     onClick={handleSubmit}
                     disabled={!inputText.trim() || isProcessing}
                     className={`w-full py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-all mt-auto ${
                       isProcessing
                         ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-blue-600/30'
+                        : 'bg-gradient-to-r from-[#0080FF] to-[#0069D9] text-white hover:shadow-lg hover:shadow-[#0080FF]/40 hover:brightness-110'
                     }`}
                   >
                     {isProcessing ? (
@@ -732,7 +835,7 @@ function App() {
                       </>
                     ) : (
                       <>
-                        <Zap className="w-4 h-4" />
+                        <Droplets className="w-4 h-4" />
                         Execute
                       </>
                     )}
