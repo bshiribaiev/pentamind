@@ -25,6 +25,15 @@ requests==2.32.3
 # Search Integration
 perplexityai  # For research/search tasks
 
+# Document Parsing
+pypdf>=4.0.0        # PDF text extraction
+python-docx>=1.1.0  # DOCX text extraction
+
+# Speech Recognition
+openai>=1.0.0       # Whisper API for speech-to-text
+SpeechRecognition>=3.10.0  # Fallback speech recognition
+pydub>=0.25.1       # Audio format conversion
+
 # Google Gemini (optional - for long context tasks)
 # Uses standard requests library, no additional package needed
 

@@ -20,7 +20,8 @@
         "transparent": true,
         "alwaysOnTop": true,
         "resizable": false,
-        "center": true
+        "center": true,
+        "dragDropEnabled": false
       }
     ],
     "security": {
