@@ -1,0 +1,30 @@
+# Pentamind Backend Requirements
+
+# Web Framework
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+
+# HTTP Client
+httpx==0.28.1
+
+# Data Validation
+pydantic==2.10.3
+pydantic-settings==2.6.1
+
+# LangGraph for Workflow
+langgraph==0.2.59
+langchain-core==0.3.29
+
+# Logging and Utilities
+python-multipart==0.0.20
+python-dotenv==1.0.1
+
+# Testing (for test_api.py)
+requests==2.32.3
+
+# Search Integration
+perplexityai  # For research/search tasks
+
+# Google Gemini (optional - for long context tasks)
+# Uses standard requests library, no additional package needed
+

@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  pentamind-backend:
+    build: .
+    container_name: pentamind-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_ACCESS_KEY=${MODEL_ACCESS_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
