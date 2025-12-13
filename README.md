@@ -19,7 +19,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/DigitalOcean-GenAI_Platform-0080FF?style=for-the-badge&logo=digitalocean&logoColor=white" alt="DigitalOcean">
+  <img src="https://img.shields.io/badge/Gradient_AI-Agentic_Cloud-6366F1?style=for-the-badge" alt="Gradient AI">
+  <img src="https://img.shields.io/badge/DigitalOcean-Hackathon-0080FF?style=for-the-badge&logo=digitalocean&logoColor=white" alt="DigitalOcean">
   <img src="https://img.shields.io/badge/MLH-Hackathon-E73427?style=for-the-badge" alt="MLH">
   <img src="https://img.shields.io/badge/Tauri-Desktop_App-FFC131?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri">
 </p>
@@ -29,6 +30,7 @@
 ## The Problem
 
 **AI models are not created equal.** Each excels at different tasks:
+
 - Claude is exceptional at coding
 - DeepSeek R1 dominates mathematical reasoning
 - Gemini handles massive documents with ease
@@ -36,6 +38,7 @@
 - Mistral excels at text refinement
 
 **But users shouldn't need to know this.** They shouldn't have to:
+
 - Switch between 5 different AI apps
 - Guess which model is best for their task
 - Pay for multiple subscriptions
@@ -69,13 +72,13 @@ Pentamind is a **desktop overlay application** that intelligently routes your re
 
 ### 🎯 Five Specialized Models for Five Task Types
 
-| Task | Model | Why This Model |
-|------|-------|----------------|
-| **📝 Summarize** | Gemini 2.5 Pro | 2M token context window for massive documents |
-| **🔍 Research** | Perplexity AI | Real-time web search with citations |
-| **🧮 Solve** | DeepSeek R1 | State-of-the-art mathematical reasoning |
-| **💻 Code** | Claude Sonnet 4 | Best-in-class code generation |
-| **✍️ Rewrite** | Mistral Small | Excellent text refinement and editing |
+| Task             | Model           | Why This Model                                |
+| ---------------- | --------------- | --------------------------------------------- |
+| **📝 Summarize** | Gemini 2.5 Pro  | 2M token context window for massive documents |
+| **🔍 Research**  | Perplexity AI   | Real-time web search with citations           |
+| **🧮 Solve**     | DeepSeek R1     | State-of-the-art mathematical reasoning       |
+| **💻 Code**      | Claude Sonnet 4 | Best-in-class code generation                 |
+| **✍️ Rewrite**   | Mistral Small   | Excellent text refinement and editing         |
 
 ### ✨ Key Features
 
@@ -85,7 +88,7 @@ Pentamind is a **desktop overlay application** that intelligently routes your re
 - **🔄 Smart Routing** — Automatic model selection based on task type
 - **📊 LaTeX Rendering** — Beautiful math equations with KaTeX
 - **⚡ Fast & Local** — Native Tauri app, no browser needed
-- **🌊 DigitalOcean Powered** — Enterprise-grade AI infrastructure
+- **🌊 Gradient AI Powered** — Enterprise-grade AI infrastructure via DigitalOcean
 
 ### 💡 Example Use Cases
 
@@ -122,9 +125,9 @@ Pentamind is a **desktop overlay application** that intelligently routes your re
         ┌────────────────────┼────────────────────┐
         ▼                    ▼                    ▼
 ┌───────────────┐  ┌─────────────────┐  ┌────────────────┐
-│  DigitalOcean │  │   Google Cloud  │  │  Perplexity    │
-│  GenAI        │  │   (Gemini 2.5)  │  │  Search API    │
-│  Platform     │  │                 │  │                │
+│  Gradient AI  │  │   Google Cloud  │  │  Perplexity    │
+│  Agentic      │  │   (Gemini 2.5)  │  │  Search API    │
+│  Cloud        │  │                 │  │                │
 ├───────────────┤  └─────────────────┘  └────────────────┘
 │ • Claude      │
 │ • DeepSeek R1 │
@@ -136,6 +139,7 @@ Pentamind is a **desktop overlay application** that intelligently routes your re
 ### Tech Stack
 
 **Frontend (Desktop App)**
+
 - **Tauri v2** — Lightweight, secure native app framework
 - **React 19** — Modern UI with hooks
 - **TypeScript** — Type-safe development
@@ -143,12 +147,14 @@ Pentamind is a **desktop overlay application** that intelligently routes your re
 - **KaTeX** — LaTeX math rendering
 
 **Backend (AI Orchestration)**
+
 - **FastAPI** — High-performance Python API
 - **LangGraph** — Workflow orchestration for AI agents
 - **pypdf + python-docx** — Document parsing
 - **OpenAI Whisper** — Speech-to-text transcription
 
-**AI Models via DigitalOcean GenAI Platform**
+**AI Models via Gradient AI Agentic Cloud**
+
 - `anthropic-claude-sonnet-4` — Code generation
 - `deepseek-r1-distill-llama-70b` — Reasoning & math
 - `mistral-small-3.1-24b-instruct` — Text editing
@@ -156,6 +162,7 @@ Pentamind is a **desktop overlay application** that intelligently routes your re
 - `llama3-8b-instruct` — Fast task classification
 
 **External APIs**
+
 - **Gemini 2.5 Pro/Flash** — Long-context summarization
 - **Perplexity AI** — Real-time web research
 
@@ -164,18 +171,23 @@ Pentamind is a **desktop overlay application** that intelligently routes your re
 ## Challenges We Ran Into
 
 ### 1. **Tauri Window Dragging Issues**
+
 The transparent overlay window wouldn't drag properly after interacting with other apps. We solved this by implementing direct `startDragging()` API calls instead of relying on `data-tauri-drag-region`.
 
 ### 2. **File Drag & Drop in WebView**
+
 Tauri's `dragDropEnabled` setting was intercepting browser drag events. Setting it to `false` allowed native HTML5 drag-and-drop to work correctly.
 
 ### 3. **Model API Rate Limits**
+
 Different models have different rate limits and response times. We implemented intelligent fallback logic — if one model fails, the system automatically retries with an alternative.
 
 ### 4. **LaTeX Rendering**
+
 AI models often return raw LaTeX (e.g., `\frac{a}{b}`). We integrated KaTeX to render beautiful math equations in the response view.
 
 ### 5. **macOS Window Hiding**
+
 When hiding the overlay, clicking the dock icon wouldn't show it again. We had to handle the `Reopen` event in Rust to properly restore the window.
 
 ---
@@ -194,17 +206,17 @@ When hiding the overlay, clicking the dock icon wouldn't show it again. We had t
 - **One-click access** — Always-on overlay, always ready
 - **Zero learning curve** — Just type, speak, or drop a file
 - **Beautiful math rendering** — LaTeX equations look professional
-- **DigitalOcean-inspired design** — Clean, modern, ocean-blue theme
+- **Modern design** — Clean, elegant, gradient-inspired theme
 
 ### 📊 By The Numbers
 
-| Metric | Value |
-|--------|-------|
-| AI Models Integrated | 5+ |
+| Metric               | Value                             |
+| -------------------- | --------------------------------- |
+| AI Models Integrated | 5+                                |
 | Supported File Types | 6 (PDF, DOCX, TXT, MD, JSON, CSV) |
-| Max Context Length | 2,000,000 tokens |
-| App Bundle Size | ~10 MB |
-| API Response Time | <3 seconds average |
+| Max Context Length   | 2,000,000 tokens                  |
+| App Bundle Size      | ~10 MB                            |
+| API Response Time    | <3 seconds average                |
 
 ---
 
@@ -250,6 +262,7 @@ When hiding the overlay, clicking the dock icon wouldn't show it again. We had t
 ### 💭 The Dream
 
 We envision Pentamind as the **universal AI interface** — a single, intelligent assistant that:
+
 - Knows when to search the web
 - Knows when to analyze documents
 - Knows when to write code
@@ -309,6 +322,5 @@ Built with 💙 for the **MLH x DigitalOcean Hackathon**
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Powered_by-DigitalOcean_GenAI-0080FF?style=flat-square&logo=digitalocean" alt="DigitalOcean">
+  <img src="https://img.shields.io/badge/Powered_by-Gradient_AI_Agentic_Cloud-6366F1?style=flat-square" alt="Gradient AI">
 </p>
-

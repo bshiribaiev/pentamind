@@ -11,7 +11,7 @@ Pentamind automatically routes tasks to the best AI model based on task classifi
 - **General tasks** → `openai-gpt-5` (fallback)
 - **Task classification** → `openai-gpt-4o-mini` (router)
 
-All models are accessed through **DigitalOcean Serverless Inference**.
+All models are accessed through **Gradient AI Agentic Cloud** — DigitalOcean's serverless AI inference platform.
 
 ## Features
 
