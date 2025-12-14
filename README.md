@@ -11,6 +11,7 @@
 <p align="center">
   <a href="#inspiration">Inspiration</a> •
   <a href="#what-it-does">What It Does</a> •
+  <a href="#walkthrough">Walkthrough</a> •
   <a href="#how-we-built-it">How We Built It</a> •
   <a href="#challenges">Challenges</a> •
   <a href="#accomplishments">Accomplishments</a> •
@@ -25,6 +26,12 @@
   <img src="https://img.shields.io/badge/Tauri-Desktop_App-FFC131?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri">
 </p>
 
+
+## Walkthrough
+
+<p align="center">
+  <img src="walkthrough.gif" alt="Pentamind Walkthrough" width="900">
+</p>
 ---
 
 ## The Problem
