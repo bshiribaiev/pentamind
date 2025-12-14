@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Droplets, X, Upload, FileText, ChevronDown, ChevronUp, Maximize2, Minimize2, Loader2, Mic, MicOff, RotateCcw, Minus, Zap } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
@@ -81,6 +82,12 @@ function renderMarkdown(text: string) {
     
     // Inline code: `code`
     processed = processed.replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 bg-slate-700 rounded text-blue-300 text-xs font-mono">$1</code>');
+    
+    // URLs: make them clickable
+    processed = processed.replace(
+      /(https?:\/\/[^\s<>"')\]]+)/g,
+      '<a href="$1" class="text-blue-400 hover:text-blue-300 hover:underline cursor-pointer" data-external-url="$1">$1</a>'
+    );
     
     return processed;
   };
@@ -765,7 +772,17 @@ function App() {
 
               {/* Response Section - Takes most space when visible */}
               {showingResponse && (
-                <div className="flex-1 overflow-auto mb-3">
+                <div 
+                  className="flex-1 overflow-auto mb-3"
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    const url = target.getAttribute('data-external-url');
+                    if (url) {
+                      e.preventDefault();
+                      openUrl(url);
+                    }
+                  }}
+                >
                   <div className="mb-3">
                     {renderMarkdown(response.final)}
                   </div>
